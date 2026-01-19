@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行政文書助手 - 儀表板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <nav class="bg-emerald-600 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 text-white font-bold text-xl">
+                        Document Assistant
+                    </div>
+                    {% if user.role == 'developer' %}
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="{{ url_for('developer_dashboard') }}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">開發者後台</a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex">
+                    <span class="text-white mr-4 self-center">歡迎, {{ user.name }}</span>
+                    <a href="{{ url_for('logout') }}" class="text-white bg-emerald-700 hover:bg-emerald-800 px-3 py-2 rounded-md text-sm font-medium">登出</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-semibold text-slate-800">專案列表</h1>
+                {% if user.role in ['manager', 'developer'] %}
+                <a href="{{ url_for('project_setup') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded shadow transition duration-150 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    新增文件專案
+                </a>
+                {% endif %}
+            </div>
+
+            {% if projects %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for project in projects %}
+                <div class="bg-white overflow-hidden shadow rounded-lg border border-slate-200 hover:shadow-md transition">
+                    <div class="p-5">
+                        <h3 class="text-lg leading-6 font-medium text-slate-900">{{ project.name }}</h3>
+                        <p class="mt-1 max-w-2xl text-sm text-slate-500">{{ project.description or "無描述" }}</p>
+                        <p class="mt-2 text-xs text-slate-400">建立於: {{ project.created_at[:10] }}</p>
+                    </div>
+                    <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end">
+                        <a href="{{ url_for('project_form', project_id=project.id) }}" class="text-emerald-600 hover:text-emerald-900 font-medium text-sm">
+                            開始作業 &rarr;
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-20 bg-white rounded-lg border border-dashed border-slate-300">
+                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <h3 class="mt-2 text-sm font-medium text-slate-900">目前沒有專案</h3>
+                <p class="mt-1 text-sm text-slate-500">點擊右上方按鈕建立您的第一個自動化文件專案。</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

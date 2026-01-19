@@ -1,0 +1,10 @@
+flask
+flask-login
+google-generativeai
+python-docx
+docxtpl
+pandas
+openpyxl
+werkzeug
+python-dotenv
+Pillow

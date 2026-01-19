@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開發者控制台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-gray-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-white font-bold text-xl">Developer Console</span>
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="{{ url_for('index') }}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">回首頁</a>
+                    </div>
+                </div>
+                <div class="text-white">Admin: {{ user.name }}</div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Tabs -->
+        <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="myTab" data-tabs-toggle="#myTabContent" role="tablist">
+                <li class="mr-2" role="presentation">
+                    <button class="inline-block p-4 rounded-t-lg border-b-2 text-blue-600 border-blue-600 active" id="config-tab" data-tabs-target="#config" type="button" role="tab" aria-controls="config" aria-selected="true" onclick="openTab('config')">系統設定 (Prompts)</button>
+                </li>
+                <li class="mr-2" role="presentation">
+                    <button class="inline-block p-4 rounded-t-lg border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300" id="projects-tab" data-tabs-target="#projects" type="button" role="tab" aria-controls="projects" aria-selected="false" onclick="openTab('projects')">專案管理</button>
+                </li>
+                <li class="mr-2" role="presentation">
+                    <button class="inline-block p-4 rounded-t-lg border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300" id="stats-tab" data-tabs-target="#stats" type="button" role="tab" aria-controls="stats" aria-selected="false" onclick="openTab('stats')">Token 儀表板</button>
+                </li>
+            </ul>
+        </div>
+
+        <div id="myTabContent">
+            <!-- Config Tab -->
+            <div class="hidden p-4 rounded-lg bg-white" id="config" role="tabpanel" style="display:block;">
+                <h2 class="text-xl font-bold mb-4">系統提示詞設定 (System Prompt)</h2>
+                <form id="configForm">
+                    <div class="mb-4">
+                        <label for="ai_prompt" class="block text-gray-700 text-sm font-bold mb-2">AI Analysis Prompt</label>
+                        <textarea id="ai_prompt" rows="20" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline font-mono text-sm"></textarea>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button type="button" onclick="saveConfig()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            儲存設定
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Projects Tab -->
+            <div class="hidden p-4 rounded-lg bg-white" id="projects" role="tabpanel">
+                <h2 class="text-xl font-bold mb-4">專案管理</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full leading-normal">
+                        <thead>
+                            <tr>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Project Name</th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created At</th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectsTableBody">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div class="hidden p-4 rounded-lg bg-white" id="stats" role="tabpanel">
+                <h2 class="text-xl font-bold mb-4">Gemini Token Usage</h2>
+                <div class="w-full h-64">
+                    <canvas id="tokenChart"></canvas>
+                </div>
+                <div class="mt-8 overflow-x-auto">
+                    <table class="min-w-full leading-normal">
+                         <thead>
+                            <tr>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tokens</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            loadProjects();
+            loadStats();
+        });
+
+        function openTab(tabName) {
+            ['config', 'projects', 'stats'].forEach(t => {
+                document.getElementById(t).style.display = (t === tabName) ? 'block' : 'none';
+                document.getElementById(t + '-tab').classList.toggle('border-blue-600', t === tabName);
+                document.getElementById(t + '-tab').classList.toggle('text-blue-600', t === tabName);
+            });
+        }
+
+        async function loadConfig() {
+            const res = await fetch('/api/admin/config');
+            const data = await res.json();
+            document.getElementById('ai_prompt').value = data.ai_prompt_template;
+        }
+
+        async function saveConfig() {
+            const prompt = document.getElementById('ai_prompt').value;
+            const res = await fetch('/api/admin/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ai_prompt_template: prompt})
+            });
+            if(res.ok) alert('Saved!');
+        }
+
+        async function loadProjects() {
+            const res = await fetch('/api/admin/projects'); // We need endpoint for this or just use template variable
+            // But we want dynamic delete, so fetch is better.
+             // Actually, the main API sends projects to index. Let's make a dedicated admin API.
+            const data = await res.json();
+            const tbody = document.getElementById('projectsTableBody');
+            tbody.innerHTML = '';
+            data.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${p.name}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm font-mono">${p.id}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${p.created_at}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                        <button onclick="deleteProject('${p.id}')" class="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteProject(id) {
+            if(!confirm('Are you sure? This cannot be undone.')) return;
+            const res = await fetch('/api/admin/project/' + id, { method: 'DELETE' });
+            if(res.ok) loadProjects();
+        }
+
+        async function loadStats() {
+            const res = await fetch('/api/admin/stats');
+            const data = await res.json();
+            
+            // Render Table (Last 10)
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '';
+            data.slice().reverse().slice(0, 50).forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-5 py-2 border-b border-gray-200 bg-white text-sm">${log.date}</td>
+                    <td class="px-5 py-2 border-b border-gray-200 bg-white text-sm">
+                        Total: ${log.tokens.total_tokens} (In: ${log.tokens.prompt_tokens}, Out: ${log.tokens.candidates_tokens})
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Render Chart
+            const ctx = document.getElementById('tokenChart').getContext('2d');
+            const labels = data.map(d => d.date);
+            const totals = data.map(d => d.tokens.total_tokens);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Tokens',
+                        data: totals,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>

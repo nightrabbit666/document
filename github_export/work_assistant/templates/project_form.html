@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>填寫報告 - {{ project.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <nav class="bg-emerald-600 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{{ url_for('index') }}" class="text-white font-bold text-xl hover:text-emerald-100">
+                        &larr; Document Assistant
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="bg-emerald-50 px-6 py-4 border-b border-emerald-100">
+                <h1 class="text-2xl font-bold text-emerald-800">{{ project.name }}</h1>
+                <p class="text-emerald-600 mt-1">{{ project.description }}</p>
+            </div>
+
+            <form action="{{ url_for('generate_document') }}" method="POST" class="p-6 space-y-6">
+                <input type="hidden" name="project_id" value="{{ project_id }}">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for param in project.parameters %}
+                    <div class="space-y-1">
+                        <label for="{{ param.name }}" class="block text-sm font-medium text-slate-700">
+                            {{ param.description }} <span class="text-emerald-500 text-xs">({{ param.name }})</span>
+                        </label>
+                        {% if param.type == 'list' %}
+                            <!-- Pending List Implementation, fallback to text for now or split by comma -->
+                            <textarea id="{{ param.name }}" name="{{ param.name }}" rows="3" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-slate-300 rounded-md p-2 border" placeholder="輸入列表項目...">{{ param.example }}</textarea>
+                        {% else %}
+                            <input type="{{ 'number' if param.type == 'number' else 'text' }}" 
+                                   id="{{ param.name }}" 
+                                   name="{{ param.name }}" 
+                                   value="{{ param.example }}"
+                                   class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-slate-300 rounded-md p-2 border">
+                        {% endif %}
+                        <p class="text-xs text-slate-400 truncate">上下文: {{ param.context }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="pt-6 border-t border-slate-200 flex justify-end items-center space-x-4">
+                    <a href="{{ url_for('index') }}" class="text-slate-600 hover:text-slate-800 font-medium">取消</a>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded shadow flex items-center transition duration-150">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        生成文件
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

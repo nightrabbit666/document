@@ -1,0 +1,17 @@
+{
+    "admin": {
+        "password": "changeme",
+        "name": "System Developer",
+        "role": "developer"
+    },
+    "pm": {
+        "password": "changeme",
+        "name": "Project Manager",
+        "role": "manager"
+    },
+    "operator": {
+        "password": "changeme",
+        "name": "Operator",
+        "role": "operator"
+    }
+}
