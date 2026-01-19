@@ -8,3 +8,5 @@ openpyxl
 werkzeug
 python-dotenv
 Pillow
+python-pptx
+deepdiff
