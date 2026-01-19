@@ -10,3 +10,5 @@ python-dotenv
 Pillow
 python-pptx
 deepdiff
+waitress
+werkzeug
